@@ -2,21 +2,38 @@ import pool from '../config/db.js'
 
 export default class BaseModel {
   constructor(tableName) {
-    this.table = tableName
     this.pool = pool
+    this.tableName = tableName
   }
 
-  async query(sql, params) {
-    const client = await this.pool.connect()
+  async query(text, params) {
     try {
-      return await client.query(sql, params)
-    } finally {
-      client.release()
+      return await this.pool.query(text, params)
+    } catch (error) {
+      console.error(`Database query error: ${error.message}`)
+      throw error
     }
   }
 
+  // base methods for working with the database
   async findById(id) {
-    const { rows } = await this.query(`SELECT * FROM ${this.table} WHERE id = $1`, [id])
-    return rows[0] || null
+    try {
+      console.log(`Searching in table ${this.tableName} for ID:`, id)
+      const query = `SELECT * FROM ${this.tableName} WHERE id = $1`
+      console.log('Executing query:', query)
+
+      const { rows } = await this.query(query, [id])
+      console.log('Query result:', rows)
+
+      return rows[0]
+    } catch (error) {
+      console.error(`Error in findById:`, error)
+      throw error
+    }
+  }
+
+  async findAll() {
+    const { rows } = await this.query(`SELECT * FROM ${this.tableName}`)
+    return rows
   }
 }

@@ -3,27 +3,26 @@ export default class OrderController {
     this.orderService = orderService
   }
 
-  async createOrder(req, res) {
+  async createOrder(req, res, next) {
     try {
-      const order = await this.orderService.createOrder(req.params.userId, req.body.productId, req.body.quantity)
+      const { userId, productId, quantity } = req.body
+      console.log('Creating order with:', { userId, productId, quantity })
+
+      const order = await this.orderService.createOrder(userId, productId, quantity)
       res.status(201).json(order)
     } catch (error) {
-      this.handleError(error, res)
+      next(error)
     }
   }
 
-  handleError(error, res) {
-    switch (error.message) {
-      case 'User not found':
-        return res.status(404).json({ error: error.message })
-      case 'Product not found':
-        return res.status(404).json({ error: error.message })
-      case 'Insufficient balance':
-        return res.status(403).json({ error: error.message })
-      case 'Insufficient stock':
-        return res.status(409).json({ error: error.message })
-      default:
-        res.status(500).json({ error: 'Internal server error' })
+  async getUserOrders(req, res, next) {
+    try {
+      const { userId } = req.params
+      console.log(userId)
+      const orders = await this.orderService.getUserOrders(userId)
+      res.json(orders)
+    } catch (error) {
+      next(error)
     }
   }
 }
